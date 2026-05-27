@@ -1,0 +1,36 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch: 
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout project sources
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build Free Debug APK
+      run: ./gradlew :app:assembleFreeDebug -x test -x lint
+
+    - name: Upload Result APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: conversations-2.20.0-apk
+        path: app/build/outputs/apk/free/debug/*.apk
