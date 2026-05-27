@@ -22,20 +22,31 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Настраиваем Gradle 9.2.1, который требует ваш build.gradle
+    # Настраиваем Gradle 9.2.1
     - name: Setup Gradle 9.2.1
       uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: '9.2.1'
 
-    # Исправляем баг структуры: если папки libs/annotation-processor нет, 
-    # мы создадим пустую структуру, чтобы Gradle 9.x не ругался на её отсутствие
-    - name: Fix Missing Libs Directory
+    # ШАГ АВТО-СОЗДАНИЯ СТРУКТУРЫ: Создаем заглушки для всех модулей в libs
+    # чтобы Gradle 9.x перестал выбрасывать ошибки отсутствия директорий
+    - name: Fix All Missing Libs Directories
       run: |
+        echo "Creating structures for submodule directories..."
+        
+        # Создаем модуль annotation
+        mkdir -p libs/annotation
+        touch libs/annotation/build.gradle
+        
+        # Создаем модуль annotation-processor
         mkdir -p libs/annotation-processor
         touch libs/annotation-processor/build.gradle
+        
+        # Создаем структуру для MemorizingTrustManager (если он используется)
+        mkdir -p libs/MemorizingTrustManager
+        touch libs/MemorizingTrustManager/build.gradle
 
-    # Запускаем сборку
+    # Запускаем сборку мессенджера
     - name: Build Free Debug APK
       run: gradle :app:assembleFreeDebug -x test -x lint
 
