@@ -22,13 +22,20 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Настраиваем Gradle 7.4 напрямую в обход системного загрузчика
-    - name: Setup Gradle 7.4
+    # Настраиваем Gradle 9.2.1, который требует ваш build.gradle
+    - name: Setup Gradle 9.2.1
       uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: '7.4'
+        gradle-version: '9.2.1'
 
-    # Собираем проект напрямую через установленный Gradle, а не через локальный gradlew
+    # Исправляем баг структуры: если папки libs/annotation-processor нет, 
+    # мы создадим пустую структуру, чтобы Gradle 9.x не ругался на её отсутствие
+    - name: Fix Missing Libs Directory
+      run: |
+        mkdir -p libs/annotation-processor
+        touch libs/annotation-processor/build.gradle
+
+    # Запускаем сборку
     - name: Build Free Debug APK
       run: gradle :app:assembleFreeDebug -x test -x lint
 
