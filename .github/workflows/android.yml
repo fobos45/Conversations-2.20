@@ -5,16 +5,12 @@ on:
     branches: [ "master", "main" ]
   workflow_dispatch: 
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  GRADLE_OPTS: "-Dandroid.generateSyncIssueWhenLibraryConstraintsAreEnabled=false"
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout project sources
+    - name: Checkout project
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -23,29 +19,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle 9.2.1
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '9.2.1'
+    # Исправляем права для gradlew
+    - name: Grant execute permission
+      run: chmod +x gradlew
 
-    # КРИТИЧЕСКИЙ ШАГ: Создаем все недостающие папки модулей
-    - name: Recreate Missing Project Structure
-      run: |
-        mkdir -p libs/annotation
-        mkdir -p libs/annotation-processor
-        mkdir -p libs/MemorizingTrustManager
-        mkdir -p libs/openpgp-api-lib
-        # Создаем пустые build.gradle, чтобы модули считались активными
-        touch libs/annotation/build.gradle
-        touch libs/annotation-processor/build.gradle
-        touch libs/MemorizingTrustManager/build.gradle
-        touch libs/openpgp-api-lib/build.gradle
+    # Сборка проекта (используем ./gradlew вместо команды gradle)
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug -x test -x lint
 
-    - name: Build Free Debug APK
-      run: gradle :app:assembleFreeDebug -x test -x lint
-
-    - name: Upload Result APK
+    # Выгрузка результата
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: conversations-2.20.0-apk
-        path: app/build/outputs/apk/free/debug/*.apk
+        name: conversations-debug-apk
+        path: app/build/outputs/apk/debug/*.apk
