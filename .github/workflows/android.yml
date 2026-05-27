@@ -19,21 +19,20 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    # Исправляем предупреждение Gradle о библиотеках
+    # Устраняем предупреждения Gradle
     - name: Configure Gradle Properties
       run: echo "android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false" >> gradle.properties
 
-    # Даем права на исполнение скрипту сборки
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # Сборка именно free-версии (без Google Services)
-    - name: Build Free Debug APK
-      run: ./gradlew assembleFreeDebug -x test -x lint
+    # Сборка конкретной версии Conversations (не Quicksy)
+    - name: Build Conversations Free Debug APK
+      run: ./gradlew assembleConversationsFreeDebug -x test -x lint
 
-    # Загружаем готовый APK как артефакт
+    # Загружаем готовый артефакт
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: conversations-free-debug-apk
-        path: app/build/outputs/apk/free/debug/*.apk
+        path: build/outputs/apk/conversations/free/debug/*.apk
