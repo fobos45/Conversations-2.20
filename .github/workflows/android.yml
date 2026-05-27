@@ -13,7 +13,6 @@ jobs:
     - name: Checkout project
       uses: actions/checkout@v4
 
-    # Устанавливаем JDK 21, как того требует текущая версия проекта
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -28,15 +27,13 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # Запускаем сборку. 
-    # -x test: пропускает тесты (чтобы не упало из-за ошибок в тестах)
-    # -x lint: пропускает проверку кода (ускоряет сборку)
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug -x test -x lint
+    # Сборка именно free-версии (без Google Services)
+    - name: Build Free Debug APK
+      run: ./gradlew assembleFreeDebug -x test -x lint
 
-    # Загружаем готовый APK как артефакт, чтобы его можно было скачать
+    # Загружаем готовый APK как артефакт
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: conversations-debug-apk
-        path: app/build/outputs/apk/debug/*.apk
+        name: conversations-free-debug-apk
+        path: app/build/outputs/apk/free/debug/*.apk
