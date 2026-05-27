@@ -950,14 +950,14 @@ public class NotificationService {
             if (notifications.size() == 1 && Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 mBuilder =
                         buildSingleConversations(notifications.values().iterator().next(), notify);
-                modifyForSoundVibrationAndLight(mBuilder, notify, preferences);
+                modifyForSoundVibrationAndLight(mBuilder, notify, preferences, false);
                 notify(NOTIFICATION_ID, mBuilder.build());
             } else {
                 mBuilder = buildMultipleConversation(notify);
                 if (notifyOnlyOneChild) {
                     mBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN);
                 }
-                modifyForSoundVibrationAndLight(mBuilder, notify, preferences);
+                modifyForSoundVibrationAndLight(mBuilder, notify, preferences, false);
                 if (!summaryOnly) {
                     for (Map.Entry<String, ArrayList<Message>> entry : notifications.entrySet()) {
                         String uuid = entry.getKey();
@@ -2082,6 +2082,42 @@ public class NotificationService {
             notificationManager.cancel(tag, id);
         } catch (final RuntimeException e) {
             Log.d(Config.LOGTAG, "unable to cancel notification", e);
+        }
+    }
+
+    
+    private boolean isCritical(ArrayList<Message> messages) {
+        for (Message msg : messages) {
+            if (msg.getBody() != null && msg.getBody().contains("URGENT")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void playNotificationSound() {
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mXmppConnectionService);
+        final String ringtone = preferences.getString(AppSettings.NOTIFICATION_RINGTONE, 
+                                Settings.System.DEFAULT_NOTIFICATION_URI.toString());
+        
+        if (ringtone != null && !ringtone.isEmpty()) {
+            try {
+                Uri notification = Uri.parse(ringtone);
+                AudioManager audioManager = (AudioManager) mXmppConnectionService.getSystemService(Context.AUDIO_SERVICE);
+                
+                if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) {
+                    android.media.Ringtone r = RingtoneManager.getRingtone(mXmppConnectionService, notification);
+                    if (r != null) {
+                        r.setAudioAttributes(new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build());
+                        r.play();
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(Config.LOGTAG, "Ошибка при воспроизведении звука: " + e.getMessage());
+            }
         }
     }
 
