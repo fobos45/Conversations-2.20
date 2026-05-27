@@ -22,17 +22,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Генерируем именно Gradle 7.4, под который написан Conversations 2.20.0
-    - name: Regenerate Correct Gradle Wrapper
-      run: |
-        echo "Generating Gradle 7.4 Wrapper..."
-        gradle wrapper --gradle-version 7.4 --distribution-type all
+    # Настраиваем Gradle 7.4 напрямую в обход системного загрузчика
+    - name: Setup Gradle 7.4
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '7.4'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
+    # Собираем проект напрямую через установленный Gradle, а не через локальный gradlew
     - name: Build Free Debug APK
-      run: ./gradlew :app:assembleFreeDebug -x test -x lint
+      run: gradle :app:assembleFreeDebug -x test -x lint
 
     - name: Upload Result APK
       uses: actions/upload-artifact@v4
